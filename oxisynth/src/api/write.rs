@@ -84,6 +84,16 @@ impl Synth {
     }
 
     #[inline(always)]
+    pub fn read_audio_group(&mut self, group_index: usize) -> (f32, f32) {
+        self.core.read_audio_group(group_index)
+    }
+    
+    #[inline(always)]
+    pub fn next_sample(&mut self) {
+        self.core.next_sample();
+    }
+
+    #[inline(always)]
     pub fn write_cb<F: FnMut(usize, f32, f32)>(&mut self, len: usize, incr: usize, mut cb: F) {
         for i in 0..len {
             let (left, right) = self.core.read_next();

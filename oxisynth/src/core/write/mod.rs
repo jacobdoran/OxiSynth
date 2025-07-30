@@ -149,18 +149,41 @@ impl Core {
         self.ticks += BUFSIZE;
     }
 
-    #[inline]
-    pub fn read_next(&mut self) -> (f32, f32) {
-        if self.output.cur == 64 {
-            self.one_block(false);
+    #[inline(always)]
+    fn check_for_end_of_block(&mut self, do_not_mix_fx_to_out: bool) {
+        if self.output.cur == BUFSIZE {
+            self.one_block(do_not_mix_fx_to_out);
             self.output.cur = 0;
         }
+    }
 
+
+    #[inline]
+    pub fn read_next(&mut self) -> (f32, f32) {
+        self.check_for_end_of_block(false);
         let out = (
             self.output.left_buf[0][self.output.cur],
             self.output.right_buf[0][self.output.cur],
         );
         self.output.cur += 1;
         out
+    }
+
+    #[inline]
+    pub fn read_audio_group(
+        &mut self,
+        group_index: usize,
+    ) -> (f32, f32) {
+        self.check_for_end_of_block(true);
+        let out = (
+            self.output.left_buf[group_index][self.output.cur],
+            self.output.right_buf[group_index][self.output.cur],
+        );
+        out
+    }
+
+    #[inline(always)]
+    pub fn next_sample(&mut self) {
+        self.output.cur += 1;
     }
 }
