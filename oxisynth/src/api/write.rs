@@ -87,7 +87,12 @@ impl Synth {
     pub fn read_audio_group(&mut self, group_index: usize) -> (f32, f32) {
         self.core.read_audio_group(group_index)
     }
-    
+
+    #[inline(always)]
+    pub fn read_block(&mut self, do_not_mix_fx_to_out: bool) -> [&Vec<[f32; 64]>; 2] {
+        self.core.read_block(do_not_mix_fx_to_out)
+    }
+
     #[inline(always)]
     pub fn next_sample(&mut self) {
         self.core.next_sample();

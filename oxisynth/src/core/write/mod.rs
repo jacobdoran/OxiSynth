@@ -157,6 +157,12 @@ impl Core {
         }
     }
 
+    #[inline(always)]
+    pub fn read_block(&mut self, do_not_mix_fx_to_out: bool) -> [&Vec<[f32; 64]>; 2] {
+        self.one_block(do_not_mix_fx_to_out);
+        return [&self.output.left_buf, &self.output.right_buf]; // return the first sample of the block
+    }
+
 
     #[inline]
     pub fn read_next(&mut self) -> (f32, f32) {
