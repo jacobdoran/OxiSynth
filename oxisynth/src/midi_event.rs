@@ -3,7 +3,7 @@ use crate::error::{range_check, OxiError};
 pub type U7 = u8;
 pub type U14 = u16;
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum MidiEvent {
     /// Send a noteon message.
     NoteOn {
