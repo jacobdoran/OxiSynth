@@ -89,8 +89,15 @@ impl Synth {
     }
 
     #[inline(always)]
-    pub fn read_block(&mut self, do_not_mix_fx_to_out: bool) -> [&Vec<[f32; 64]>; 2] {
-        self.core.read_block(do_not_mix_fx_to_out)
+    pub fn read_stereo_blocks(&mut self) -> [&Vec<[f32; 64]>; 2] {
+        self.core.read_stereo_blocks()
+    }
+
+    #[inline(always)]
+    pub fn read_mono_blocks(
+        &mut self,
+    ) -> &Vec<[f32; 64]> {
+        self.core.read_mono_blocks()
     }
 
     #[inline(always)]

@@ -158,11 +158,16 @@ impl Core {
     }
 
     #[inline(always)]
-    pub fn read_block(&mut self, do_not_mix_fx_to_out: bool) -> [&Vec<[f32; 64]>; 2] {
-        self.one_block(do_not_mix_fx_to_out);
+    pub fn read_stereo_blocks(&mut self) -> [&Vec<[f32; 64]>; 2] {
+        self.one_block(true);
         return [&self.output.left_buf, &self.output.right_buf]; // return the first sample of the block
     }
 
+    #[inline(always)]
+    pub fn read_mono_blocks(&mut self) -> &Vec<[f32; 64]> {
+        self.one_block(true);
+        return &self.output.left_buf; // return the first sample of the block
+    }
 
     #[inline]
     pub fn read_next(&mut self) -> (f32, f32) {
@@ -176,10 +181,7 @@ impl Core {
     }
 
     #[inline]
-    pub fn read_audio_group(
-        &mut self,
-        group_index: usize,
-    ) -> (f32, f32) {
+    pub fn read_audio_group(&mut self, group_index: usize) -> (f32, f32) {
         self.check_for_end_of_block(true);
         let out = (
             self.output.left_buf[group_index][self.output.cur],
