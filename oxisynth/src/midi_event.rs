@@ -1,9 +1,10 @@
 use crate::error::{range_check, OxiError};
+use serde::{Deserialize, Serialize};
 
 pub type U7 = u8;
 pub type U14 = u16;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum MidiEvent {
     /// Send a noteon message.
     NoteOn {

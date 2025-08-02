@@ -20,6 +20,8 @@ oxisynth-chorus.workspace = true
 oxisynth-reverb.workspace = true
 soundfont.workspace = true
 log.workspace = true
+serde = "1"
+serde_json = "1"
 
 bitflags = "2.4"
 
