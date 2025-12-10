@@ -19,7 +19,7 @@ pub(crate) use {
 pub use preset::Preset;
 
 pub struct SoundFont {
-    presets: Vec<Arc<Preset>>,
+    pub presets: Vec<Arc<Preset>>,
 }
 
 // SondFont::load() might be slow due to IO or SF3 vorbis decompression,
@@ -59,6 +59,7 @@ impl SoundFont {
 
         for sfsample in sf2.sample_headers.iter() {
             let sample = Sample::import(sfsample, sample_data.clone())?;
+            println!("Loaded sample: {}", sample.name());
             samples.push(sample);
         }
 

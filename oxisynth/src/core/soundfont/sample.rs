@@ -30,37 +30,38 @@ pub(crate) struct Sample {
 }
 
 impl Sample {
-    pub fn import(
-        sample: &soundfont::raw::SampleHeader,
-        data: SampleData,
+
+    pub fn import_raw(
+        sample_header: &soundfont::raw::SampleHeader,
+        is_sf3: bool,
+        sample_data: &[i16],
     ) -> Result<Sample, LoadError> {
         let mut sample = Sample {
-            name: sample.name.clone().into(),
-            start: sample.start,
-            end: sample.end,
-            loop_start: sample.loop_start,
-            loop_end: sample.loop_end,
-            sample_rate: sample.sample_rate,
-            origpitch: sample.origpitch,
-            pitchadj: sample.pitchadj,
-            sample_type: sample.sample_type,
-            data,
-
+            name: sample_header.name.clone().into(),
+            start: sample_header.start,
+            end: sample_header.end,
+            loop_start: sample_header.loop_start,
+            loop_end: sample_header.loop_end,
+            sample_rate: sample_header.sample_rate,
+            origpitch: sample_header.origpitch,
+            pitchadj: sample_header.pitchadj,
+            sample_type: sample_header.sample_type,
+            data: SampleData::new([].into()),
             amplitude_that_reaches_noise_floor: None,
         };
 
         #[cfg(feature = "sf3")]
+        if is_sf3
         {
             if sample.sample_type.is_vorbis() {
                 let start = sample.start as usize;
                 let end = sample.end as usize;
 
-                let sample_data = sample.data.as_byte_slice();
-
                 use lewton::inside_ogg::OggStreamReader;
                 use std::io::Cursor;
 
-                let buf = Cursor::new(&sample_data[start..end]);
+                let raw_bytes = crate::unsafe_stuff::slice_i16_to_u8(&sample_data[start..end]);
+                let buf = Cursor::new(raw_bytes);
 
                 let mut reader = OggStreamReader::new(buf).unwrap();
 
@@ -100,7 +101,7 @@ impl Sample {
                 };
             }
         }
-
+        sample.data = SampleData::new(sample_data.into());
         if sample.end - sample.start < 8 {
             log::warn!(
                 "Ignoring sample {:?}: too few sample data points",
@@ -113,6 +114,35 @@ impl Sample {
             sample.optimize_sample();
         }
 
+        Ok(sample)
+    }
+
+    pub fn import(
+        sample_header: &soundfont::raw::SampleHeader,
+        data: SampleData,
+    ) -> Result<Sample, LoadError> {
+
+        // end is inclusive (the last valid sample index), so add 1 for exclusive slice end
+        let sample_data = &data[sample_header.start as usize..=sample_header.end as usize];
+        
+        // Create a modified header with adjusted offsets for the sliced data
+        let mut adjusted_header = sample_header.clone();
+        let offset = sample_header.start;
+        adjusted_header.start = 0;
+        // end is inclusive (the last valid sample index), so subtract offset
+        adjusted_header.end = adjusted_header.end.saturating_sub(offset);
+        adjusted_header.loop_start = if adjusted_header.loop_start >= offset {
+            adjusted_header.loop_start - offset
+        } else {
+            0
+        };
+        adjusted_header.loop_end = if adjusted_header.loop_end >= offset {
+            adjusted_header.loop_end - offset
+        } else {
+            adjusted_header.end
+        };
+        
+        let sample = Sample::import_raw(&adjusted_header, sample_header.sample_type.is_vorbis(), sample_data)?;
         Ok(sample)
     }
 

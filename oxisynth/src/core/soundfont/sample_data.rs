@@ -13,10 +13,25 @@ impl SampleData {
     pub fn new(data: Arc<[i16]>) -> Self {
         Self(data)
     }
+    
+    pub fn load_sample_data<F: Read + Seek>(
+        file: &mut F,
+        smpl: &SampleChunk,
+        header: &soundfont::raw::SampleHeader,
+    ) -> io::Result<Self> {
+        Self::load_full(file, smpl, header.start, header.end - header.start + 1)
+    }
 
-    pub fn load<F: Read + Seek>(file: &mut F, smpl: &SampleChunk) -> io::Result<Self> {
-        let sample_pos = smpl.offset;
-        let sample_size = smpl.len as usize;
+    pub fn load<F: Read + Seek>(
+        file: &mut F,
+        smpl: &SampleChunk,
+    ) -> io::Result<Self> {
+        Self::load_full(file, smpl, 0, smpl.len)
+    }
+
+    fn load_full<F: Read + Seek>(file: &mut F, smpl: &SampleChunk, start: u32, length: u32) -> io::Result<Self> {
+        let sample_pos = smpl.offset + (start as u64);
+        let sample_size = std::cmp::max(smpl.len, length) as usize;
 
         if let Err(err) = file.seek(SeekFrom::Start(sample_pos)) {
             log::error!("Failed to seek position in data file: {err}");

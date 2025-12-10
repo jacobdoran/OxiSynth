@@ -11,7 +11,7 @@ repository = "https://github.com/PolyMeilex/oxisynth"
 documentation = "https://docs.rs/oxisynth"
 
 [features]
-# default=["sf3"]
+default=["sf3"]
 i16-out = ["getrandom", "rand"]
 sf3 = ["lewton"]
 
