@@ -14,8 +14,6 @@ mod core;
 mod error;
 mod midi_event;
 
-mod unsafe_stuff;
-
 pub use api::Tuning;
 pub use core::{GeneratorType, InterpolationMethod, Preset, SoundFont, Sample, SampleData};
 pub use error::{OxiError, RangeError, SettingsError};
@@ -151,7 +149,7 @@ mod test {
             .unwrap();
 
         synth.write(samples.as_mut());
-        pcm.write_all(crate::unsafe_stuff::slice_f32_to_u8(&samples))
+        pcm.write_all(bytemuck::cast_slice(&samples))
             .unwrap();
 
         drop(synth);

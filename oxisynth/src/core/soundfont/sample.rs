@@ -4,8 +4,6 @@ use soundfont::raw::SampleLink;
 
 use crate::error::LoadError;
 
-use crate::unsafe_stuff;
-
 use super::SampleData;
 
 #[derive(Clone, Debug)]
@@ -120,7 +118,7 @@ impl Sample {
             };
         } else {
             // Convert raw bytes to i16 samples
-            let i16_data = unsafe_stuff::slice_u8_to_i16(raw_bytes);
+            let i16_data = bytemuck::cast_slice(raw_bytes);
             sample.data = SampleData::new(i16_data.into());
 
             // take away start offset for sample data as we already sliced it

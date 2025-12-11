@@ -5,8 +5,6 @@ use std::{
 
 use soundfont::raw::SampleChunk;
 
-use crate::unsafe_stuff;
-
 #[derive(Debug, Clone)]
 pub struct SampleData(Arc<[i16]>);
 
@@ -42,7 +40,7 @@ impl SampleData {
     ) -> io::Result<Self> {
         let data = Self::load_full(file, smpl, 0, smpl.len)?;
         // convert data from u8 to i16
-        let i16_data = unsafe_stuff::slice_u8_to_i16(&data);
+        let i16_data = bytemuck::cast_slice(&data);
         Ok(Self(i16_data.into()))
     }
 
