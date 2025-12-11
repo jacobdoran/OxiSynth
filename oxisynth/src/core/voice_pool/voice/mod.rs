@@ -1,6 +1,8 @@
 mod dsp_float;
 mod envelope;
 
+use std::sync::Arc;
+
 pub use envelope::EnvelopeStep;
 use envelope::{Envelope, EnvelopePortion};
 
@@ -109,7 +111,7 @@ pub enum ModulateCtrl {
 }
 
 pub struct VoiceDescriptor<'a> {
-    pub sample: Sample,
+    pub sample: Arc<Sample>,
     pub channel: &'a Channel,
     pub key: u8,
     pub vel: u8,
@@ -129,7 +131,7 @@ pub(crate) struct Voice {
     interp_method: InterpolationMethod,
     mod_count: usize,
 
-    sample: Sample,
+    sample: Arc<Sample>,
     start_time: usize,
 
     ticks: usize,

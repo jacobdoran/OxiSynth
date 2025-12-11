@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::error::LoadError;
 use crate::GeneratorType;
 
@@ -18,7 +20,7 @@ impl Instrument {
     pub fn import(
         sf2: &soundfont::SoundFont2,
         inst: &soundfont::Instrument,
-        samples: &[Sample],
+        samples: &[Arc<Sample>],
     ) -> Result<Self, LoadError> {
         let name = if !inst.header.name.is_empty() {
             inst.header.name.clone()
@@ -59,7 +61,7 @@ impl Instrument {
 #[repr(C)]
 pub struct InstrumentZone {
     pub name: String,
-    pub sample: Option<Sample>,
+    pub sample: Option<Arc<Sample>>,
     pub key_low: u8,
     pub key_high: u8,
     pub vel_low: u8,
@@ -73,7 +75,7 @@ impl InstrumentZone {
         name: String,
         sf2: &soundfont::SoundFont2,
         zone: &soundfont::Zone,
-        samples: &[Sample],
+        samples: &[Arc<Sample>],
     ) -> Result<InstrumentZone, LoadError> {
         let mut key_low = 0;
         let mut key_high = 128;

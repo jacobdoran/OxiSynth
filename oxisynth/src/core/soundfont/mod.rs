@@ -61,7 +61,7 @@ impl SoundFont {
         for sfsample in sf2.sample_headers.iter() {
             let sample = Sample::import(sfsample, sample_data.clone())?;
             println!("Loaded sample: {}", sample.name());
-            samples.push(sample);
+            samples.push(Arc::new(sample));
         }
 
         let mut presets = Vec::new();

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::error::LoadError;
 
 use super::generator::{GeneratorList, GeneratorType};
@@ -20,7 +22,7 @@ impl Preset {
     pub fn import(
         sf2: &soundfont::SoundFont2,
         preset: &soundfont::Preset,
-        samples: &[Sample],
+        samples: &[Arc<Sample>],
     ) -> Result<Self, LoadError> {
         let name = if !preset.header.name.is_empty() {
             preset.header.name.clone()
@@ -90,7 +92,7 @@ impl PresetZone {
         name: String,
         sf2: &soundfont::SoundFont2,
         zone: &soundfont::Zone,
-        samples: &[Sample],
+        samples: &[Arc<Sample>],
     ) -> Result<Self, LoadError> {
         let mut key_low = 0;
         let mut key_high = 128;
