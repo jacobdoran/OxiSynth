@@ -17,7 +17,7 @@ mod midi_event;
 mod unsafe_stuff;
 
 pub use api::Tuning;
-pub use core::{GeneratorType, InterpolationMethod, Preset, SoundFont};
+pub use core::{GeneratorType, InterpolationMethod, Preset, SoundFont, Sample, SampleData};
 pub use error::{OxiError, RangeError, SettingsError};
 pub use midi_event::MidiEvent;
 

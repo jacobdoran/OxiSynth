@@ -6,6 +6,8 @@ use super::{instrument::Instrument, Sample};
 
 const GEN_SET: u32 = 1;
 
+
+#[derive(Debug)]
 pub struct Preset {
     name: String,
     bank: u32,
@@ -15,7 +17,7 @@ pub struct Preset {
 }
 
 impl Preset {
-    pub(crate) fn import(
+    pub fn import(
         sf2: &soundfont::SoundFont2,
         preset: &soundfont::Preset,
         samples: &[Sample],
@@ -70,6 +72,7 @@ impl Preset {
     }
 }
 
+#[derive(Debug)]
 pub struct PresetZone {
     #[allow(dead_code)]
     pub name: String,

@@ -13,10 +13,11 @@ use std::{
 use crate::error::LoadError;
 
 pub(crate) use {
-    instrument::InstrumentZone, preset::PresetZone, sample::Sample, sample_data::SampleData,
+    instrument::InstrumentZone, preset::PresetZone,
 };
 
-pub use preset::Preset;
+pub use {preset::Preset, sample::Sample, sample_data::SampleData};
+
 
 pub struct SoundFont {
     pub presets: Vec<Arc<Preset>>,

@@ -7,7 +7,7 @@ use crate::error::LoadError;
 use super::SampleData;
 
 #[derive(Clone, Debug)]
-pub(crate) struct Sample {
+pub struct Sample {
     name: Arc<str>,
 
     start: u32,

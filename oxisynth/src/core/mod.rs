@@ -16,7 +16,7 @@ use oxisynth_chorus::Chorus;
 use oxisynth_reverb::Reverb;
 
 mod soundfont;
-pub use soundfont::{generator::GeneratorType, Preset, SoundFont};
+pub use soundfont::{generator::GeneratorType, Preset, SoundFont, Sample, SampleData};
 
 use voice_pool::VoicePool;
 use write::OutputBuffer;

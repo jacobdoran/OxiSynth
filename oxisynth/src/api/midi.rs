@@ -1,3 +1,6 @@
+use std::sync::Arc;
+use crate::core::Preset;
+
 use crate::{
     core::midi,
     error::{range_check, OxiError},
@@ -49,6 +52,13 @@ impl Synth {
             .channels
             .get_mut(channel as usize)?
             .set_banknum(bank);
+        Ok(())
+    }
+
+    // Set a preset for a channel.
+    pub fn set_preset(&mut self, channel: u8, preset: Option<Arc<Preset>>) -> Result<(), OxiError> {
+        let channel = self.core.channels.get_mut(channel as usize)?;
+        channel.set_preset(preset);
         Ok(())
     }
 
