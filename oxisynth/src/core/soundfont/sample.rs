@@ -4,6 +4,8 @@ use soundfont::raw::SampleLink;
 
 use crate::error::LoadError;
 
+use crate::unsafe_stuff;
+
 use super::SampleData;
 
 #[derive(Clone, Debug)]
@@ -32,17 +34,16 @@ pub struct Sample {
 impl Sample {
     pub fn import_raw(
         sample_header: &soundfont::raw::SampleHeader,
-        sample_data: &[i16],        
+        raw_bytes: &[u8],        
     ) -> Result<Sample, LoadError> {
 
         // Create a modified header with adjusted offsets for the sliced data
-        let offset = sample_header.start;
         let mut sample = Sample {
             name: sample_header.name.clone().into(),
-            start: sample_header.start - offset,
-            end: sample_header.end - offset,
-            loop_start: sample_header.loop_start - offset,
-            loop_end: sample_header.loop_end - offset,
+            start: sample_header.start,
+            end: sample_header.end,
+            loop_start: sample_header.loop_start,
+            loop_end: sample_header.loop_end,
             sample_rate: sample_header.sample_rate,
             origpitch: sample_header.origpitch,
             pitchadj: sample_header.pitchadj,
@@ -53,21 +54,40 @@ impl Sample {
 
         #[cfg(feature = "sf3")]
         if sample.sample_type.is_vorbis() {
-            let start = sample.start as usize;
-            let end = sample.end as usize;
-
             use lewton::inside_ogg::OggStreamReader;
             use std::io::Cursor;
-
-            let raw_bytes = crate::unsafe_stuff::slice_i16_to_u8(&sample_data[start..end]);
             let buf = Cursor::new(raw_bytes);
+            let mut reader = match OggStreamReader::new(buf) {
+                Ok(r) => r,
+                Err(e) => {
+                    log::error!("Failed to create OGG reader for sample {}: {:?}", sample.name, e);
+                    return Err(LoadError::Io(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        format!("Invalid OGG data: {:?}", e)
+                    )));
+                }
+            };
 
-            let mut reader = OggStreamReader::new(buf).unwrap();
-
-            let mut new = Vec::new();
-
-            while let Some(mut pck) = reader.read_dec_packet().unwrap() {
-                new.append(&mut pck[0]);
+            // Pre-allocate with estimated capacity based on sample rate and duration
+            // Average soundfont sample is ~2 seconds, allocate for 4 to avoid most reallocations
+            let estimated_samples = (sample.sample_rate * 4) as usize;
+            let mut new = Vec::with_capacity(estimated_samples);
+            
+            loop {
+                match reader.read_dec_packet_itl() {
+                    Ok(Some(pck)) => {
+                        // Use extend_from_slice instead of append - faster for slices
+                        new.extend_from_slice(&pck);
+                    }
+                    Ok(None) => break,
+                    Err(e) => {
+                        log::error!("Error reading Vorbis packet for sample {}: {:?}", sample.name, e);
+                        return Err(LoadError::Io(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!("Vorbis decode error: {:?}", e)
+                        )));
+                    }
+                }
             }
 
             sample.start = 0;
@@ -98,8 +118,18 @@ impl Sample {
                 SampleLink::VorbisLinkedSample => SampleLink::LinkedSample,
                 _ => unreachable!("Not Vorbis"),
             };
+        } else {
+            // Convert raw bytes to i16 samples
+            let i16_data = unsafe_stuff::slice_u8_to_i16(raw_bytes);
+            sample.data = SampleData::new(i16_data.into());
+
+            // take away start offset for sample data as we already sliced it
+            let offset = sample.start;
+            sample.loop_start -= offset;
+            sample.loop_end -= offset;
+            sample.start-= offset;
+            sample.end -= offset;
         }
-        sample.data = SampleData::new(sample_data.into());
         if sample.end - sample.start < 8 {
             log::warn!(
                 "Ignoring sample {:?}: too few sample data points",
@@ -121,7 +151,12 @@ impl Sample {
     ) -> Result<Sample, LoadError> {
         // end is inclusive (the last valid sample index), so add 1 for exclusive slice end
         let sample_data = &data[sample_header.start as usize..=sample_header.end as usize];
-        let sample = Sample::import_raw(sample_header, sample_data)?;
+        // convertt to u8 slice
+        let sample_data = sample_data
+            .iter()
+            .flat_map(|s| s.to_le_bytes())
+            .collect::<Vec<u8>>();
+        let sample = Sample::import_raw(sample_header, &sample_data)?;
         Ok(sample)
     }
 
