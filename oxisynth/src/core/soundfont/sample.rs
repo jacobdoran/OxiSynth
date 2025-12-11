@@ -30,7 +30,18 @@ pub struct Sample {
 }
 
 impl Sample {
-    pub fn import_raw(
+    pub fn import_sample_from_sf2<F: std::io::Read + std::io::Seek>(
+        file: &mut F,
+        smpl: &soundfont::raw::SampleChunk,
+        header: &soundfont::raw::SampleHeader,
+    ) -> Result<Sample, LoadError> {
+        let data = SampleData::load_sample_data(file, smpl, header)
+            .map_err(LoadError::Io)?;
+        let sample = Sample::import_raw_bytes(header, &data)?;
+        Ok(sample)
+    }
+
+    fn import_raw_bytes(
         sample_header: &soundfont::raw::SampleHeader,
         raw_bytes: &[u8],        
     ) -> Result<Sample, LoadError> {
@@ -150,11 +161,8 @@ impl Sample {
         // end is inclusive (the last valid sample index), so add 1 for exclusive slice end
         let sample_data = &data[sample_header.start as usize..=sample_header.end as usize];
         // convertt to u8 slice
-        let sample_data = sample_data
-            .iter()
-            .flat_map(|s| s.to_le_bytes())
-            .collect::<Vec<u8>>();
-        let sample = Sample::import_raw(sample_header, &sample_data)?;
+        let sample_data = bytemuck::cast_slice(sample_data);
+        let sample = Sample::import_raw_bytes(sample_header, &sample_data)?;
         Ok(sample)
     }
 
