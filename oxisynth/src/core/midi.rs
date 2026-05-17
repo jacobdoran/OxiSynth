@@ -15,7 +15,7 @@ use super::Core;
 
 pub(crate) fn handle_event(synth: &mut Core, event: MidiEvent) -> Result<(), OxiError> {
     match event.check()? {
-        MidiEvent::NoteOn { channel, key, vel } => {
+        MidiEvent::NoteOn { channel, key, vel , playback_vel } => {
             self::noteon(
                 synth.channels.get(channel as usize)?,
                 &mut synth.voices,
@@ -24,6 +24,7 @@ pub(crate) fn handle_event(synth: &mut Core, event: MidiEvent) -> Result<(), Oxi
                 synth.settings.gain,
                 key,
                 vel,
+                playback_vel,
             )?;
         }
         MidiEvent::NoteOff { channel, key } => {
@@ -144,6 +145,7 @@ fn noteon(
     gain: f32,
     key: u8,
     vel: u8,
+    playback_velocity: Option<u8>,
 ) -> Result<(), OxiError> {
     if vel == 0 {
         voices.noteoff(channel, min_note_length_ticks, key);
@@ -154,7 +156,7 @@ fn noteon(
         voices.release_voice_on_same_note(channel, key, min_note_length_ticks);
         voices.noteid_add();
 
-        inner_noteon(channel, voices, start_time, gain, key, vel);
+        inner_noteon(channel, voices, start_time, gain, key, vel, playback_velocity);
         Ok(())
     }
 }
@@ -166,6 +168,7 @@ fn inner_noteon(
     gain: f32,
     key: u8,
     vel: u8,
+    playback_velocity_option: Option<u8>,
 ) {
     fn preset_zone_inside_range(zone: &PresetZone, key: u8, vel: u8) -> bool {
         zone.key_low <= key && zone.key_high >= key && zone.vel_low <= vel && zone.vel_high >= vel
@@ -175,6 +178,7 @@ fn inner_noteon(
         zone.key_low <= key && zone.key_high >= key && zone.vel_low <= vel && zone.vel_high >= vel
     }
 
+    let playback_velocity = playback_velocity_option.unwrap_or(vel);
     let preset = &channel.preset().unwrap();
 
     // list for 'sorting' preset modulators
@@ -381,7 +385,7 @@ fn inner_noteon(
                 sample: sample.clone(),
                 channel,
                 key,
-                vel,
+                vel: playback_velocity,
                 start_time,
                 gain,
             };
@@ -393,7 +397,7 @@ fn inner_noteon(
                     "noteon\t{}\t{}\t{}\t\t{}",
                     channel.id(),
                     key,
-                    vel,
+                    playback_velocity,
                     start_time as f32 / 44100.0,
                 );
             } else {

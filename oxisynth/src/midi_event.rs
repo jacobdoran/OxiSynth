@@ -11,6 +11,7 @@ pub enum MidiEvent {
         channel: u8,
         key: U7,
         vel: U7,
+        playback_vel: Option<U7>,
     },
     /// Send a noteoff message.
     NoteOff {
